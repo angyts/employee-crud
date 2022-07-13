@@ -6,7 +6,7 @@ const routes = [
         path: '/',
         // Rather than having to have separate import statements at the top of this page for each component
         // Here's a simple way we can directly make our components available
-        component: () => import('@/App.vue'),
+        component: () => import('@/AppCopy.vue'),
         name: 'home'
     },
     {
