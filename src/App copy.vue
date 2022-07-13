@@ -53,8 +53,6 @@
         </template>
       </el-table-column>
     </el-table>
-
-    <router-view></router-view>
   </div>
 </template>
 
