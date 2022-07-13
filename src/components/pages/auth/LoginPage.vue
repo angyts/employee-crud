@@ -7,7 +7,7 @@
         v-model="email"
       ></el-input>
 
-      <el-input placeholder="Please input password" v-model="pw" show-password></el-input>
+      <el-input placeholder="Please input password" v-model="pw" show-password @keyup.enter='login'></el-input>
       <button @click='login' @keyup.enter='login'>Login</button>
 
     </div>
@@ -15,6 +15,8 @@
 
 <script>
 import firebase from "@/firebaseInit.js";
+import store from "@/common/store.js";
+
 const db = firebase.firestore();
 
 export default {
@@ -23,6 +25,7 @@ export default {
         return {
             email: '',
             pw: '',
+            posts: [],
             loggedIn: false
         };
     },
@@ -32,6 +35,7 @@ export default {
           firebase.auth().signInWithEmailAndPassword(this.email, this.pw)
             .then((userCredential) => {
             // Signed in 
+            
             var user = userCredential.user;
             console.log(user);
             
@@ -39,16 +43,25 @@ export default {
             .get()
             .then((querySnapshot) => {
                   querySnapshot.forEach((doc) => {
-            //        this.employeesData.push({
-            //          id: doc.id,
-            //          name: doc.data().name,
-            //          date: doc.data().date,
-            //        });
+                    this.posts.push({
+                      id: doc.id,
+                      created: doc.data().created,
+                      day: doc.data().day,
+                      title: doc.data().title,
+                      content: doc.data().content,
+                    });
+
                     console.log(doc.id, " => ", doc.data());
+                    store.commit('setAdmin', true);
+                    store.commit('updatePosts', this.posts);
+
+                    // Send the now logged in user to the diary
+                    this.$router.push({ name: 'diary' }).catch();                    
                   });
                 })
-            .catch((error) => {
-              console.log("Error getting documents: ", error);
+            .catch(() => {
+              // Logged in but not admin user
+              this.$router.push({ name: 'home' }).catch();
             });
 
             })
@@ -66,19 +79,6 @@ export default {
                       }
                   });
             });
-//            this.errors = [];
-//
-  //          app.api
-    //            .register(this.email, this.password, this.name)
-      //          .then(response => {
-        //            if (!response.error) {
-          //              // Send the now logged in user to the home page
-            //            this.$router.push({ name: 'home' });
-              //      } else {
-                //        // Load/show errors
-                  //      this.errors.push(response.error);
-                  //  }
-      //          });
         }
     },
     mounted: function() {

@@ -1,58 +1,153 @@
 <template>
-  <div class="hello">
-    <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br>
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank" rel="noopener">vue-cli documentation</a>.
-    </p>
-    <h3>Installed CLI Plugins</h3>
-    <ul>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel" target="_blank" rel="noopener">babel</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint" target="_blank" rel="noopener">eslint</a></li>
-    </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank" rel="noopener">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank" rel="noopener">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank" rel="noopener">Twitter</a></li>
-      <li><a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a></li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li><a href="https://router.vuejs.org" target="_blank" rel="noopener">vue-router</a></li>
-      <li><a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a></li>
-      <li><a href="https://github.com/vuejs/vue-devtools#vue-devtools" target="_blank" rel="noopener">vue-devtools</a></li>
-      <li><a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
-    </ul>
+  <div>
+    <el-popover
+      placement="bottom"
+      title="New Post"
+      width="800"
+      trigger="click"
+    >
+      <el-input
+        placeholder="Post Title"
+        v-model="title"
+      ></el-input>
+      <el-input
+        placeholder="Day"
+        v-model="day"
+      ></el-input>      
+      <el-input
+        placeholder="Entry"
+        v-model="content"
+        @blur="createPost(title, day, created, content)"
+      ></el-input>      
+      <el-button round slot="reference" type="success"
+        >Add New Post</el-button
+      >
+    </el-popover>
+    <el-table
+      :data="posts.filter(
+          (data) =>!search || data.title.toLowerCase().includes(search.toLowerCase())
+        )
+      "
+      style="width: 100%;"
+    >
+      <el-table-column label="Day" prop="day"> </el-table-column>
+      <el-table-column label="Title" prop="title"> </el-table-column>
+      <el-table-column label="Entry" prop="content"> </el-table-column>
+      <el-table-column align="right">
+        <template slot="header" :slot-scope="scope">
+          <el-input v-model="search" size="mini" placeholder="Type to search" />
+        </template>
+        <template slot-scope="scope">
+          <el-popover
+            placement="bottom"
+            title="Edit Post"
+            width="200"
+            trigger="click"
+          >
+            <el-input
+              placeholder="John Doe"
+              v-model="scope.row.name"
+              @blur="updateEmployee(scope.row.id, scope.row.name, date)"
+            ></el-input>
+            <el-button size="mini" slot="reference">Edit</el-button>
+          </el-popover>
+          <el-button
+            size="mini"
+            type="danger"
+            @click="deleteEmployee(scope.row.id)"
+            >Delete</el-button
+          >
+        </template>
+      </el-table-column>
+    </el-table>
   </div>
 </template>
 
 <script>
-export default {
-  name: 'Diary',
-  props: {
-    msg: String
-  }
-}
-</script>
+import firebase from "@/firebaseInit.js";
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-h3 {
-  margin: 40px 0 0;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
-</style>
+const db = firebase.firestore();
+
+
+export default {
+  data() {
+    return {
+      posts: [],
+      title: "",
+      content: "",
+      created: new Date().toISOString().slice(0, 10),
+      day: "",
+      search: "",
+    };
+  },
+  methods: {
+    createPost(title, day, created, content) {
+      if (title != "" && content != "" && day != "") {
+        db.collection("isAdmin")
+          .add({ title: title, day: day, created: created, content: content})
+          .then(() => {
+            console.log("Document successfully written!");
+            this.readPosts();
+          })
+          .catch((error) => {
+            console.error("Error writing document: ", error);
+          });
+        this.title = "";
+        this.day = "";
+        this.content = "";
+      }
+    },
+    readPosts() {
+      this.posts = [];
+      db.collection("isAdmin")
+        .get()
+        .then((querySnapshot) => {
+          querySnapshot.forEach((doc) => {
+            this.posts.push({
+                id: doc.id,
+                created: doc.data().created,
+                day: doc.data().day,
+                title: doc.data().title,
+                content: doc.data().content,
+            });
+            console.log(doc.id, " => ", doc.data());
+          });
+        })
+        .catch((error) => {
+          console.log("Error getting documents: ", error);
+        });
+    },
+    updateEmployee(id, name, date) {
+      db.collection("employees")
+        .doc(id)
+        .update({
+          name: name,
+          date: date,
+        })
+        .then(() => {
+          console.log("Document successfully updated!");
+          this.readEmployees();
+        })
+        .catch((error) => {
+          // The document probably doesn't exist.
+          console.error("Error updating document: ", error);
+        });
+    },
+    deleteEmployee(id) {
+      db.collection("employees")
+        .doc(id)
+        .delete()
+        .then(() => {
+          console.log("Document successfully deleted!");
+          this.readEmployees();
+        })
+        .catch((error) => {
+          console.error("Error removing document: ", error);
+        });
+    },
+  },
+  mounted() {
+    this.posts = this.$store.state.posts;
+  },
+};
+</script>
