@@ -10,12 +10,17 @@
         placeholder="Post Title"
         v-model="title"
       ></el-input>
-      <el-input
-        placeholder="Day"
-        v-model="day"
-      ></el-input>      
+    <el-date-picker
+      v-model="day"
+      type="date"
+      placeholder="Day"
+      format="dd/MM/yyyy"
+      :picker-options="pickerOptions">
+    </el-date-picker>        
       <el-input
         placeholder="Entry"
+        type="textarea"
+        :rows="6"
         v-model="content"
         @blur="createPost(title, day, created, content)"
       ></el-input>      
@@ -30,7 +35,9 @@
       "
       style="width: 100%;"
     >
-      <el-table-column label="Day" prop="day"> </el-table-column>
+      <el-table-column label="ID" prop="id" width="80"> </el-table-column>
+      <el-table-column label="Day" prop="day.seconds"> </el-table-column>
+      <el-table-column label="Created" prop="created.seconds"> </el-table-column>
       <el-table-column label="Title" prop="title"> </el-table-column>
       <el-table-column label="Entry" prop="content"> </el-table-column>
       <el-table-column align="right">
@@ -45,16 +52,18 @@
             trigger="click"
           >
             <el-input
-              placeholder="John Doe"
-              v-model="scope.row.name"
-              @blur="updateEmployee(scope.row.id, scope.row.name, date)"
+              v-model="scope.row.title"
             ></el-input>
-            <el-button size="mini" slot="reference">Edit</el-button>
+            <el-input
+              v-model="scope.row.content"
+              @blur="updatePost(scope.row.id, scope.row.title, scope.row.content)"
+            ></el-input>            
+            <el-button size="mini" slot="reference">Edit Post</el-button>
           </el-popover>
           <el-button
             size="mini"
             type="danger"
-            @click="deleteEmployee(scope.row.id)"
+            @click="deletePost(scope.row.id)"
             >Delete</el-button
           >
         </template>
@@ -64,20 +73,55 @@
 </template>
 
 <script>
+import moment from 'moment';
+
+//
+
+// TODO 
+
+// moment.unix(Number)
+// moment().format(D / MMM / YYYY);
 import firebase from "@/firebaseInit.js";
 
 const db = firebase.firestore();
 
 
+
 export default {
+    moment,
   data() {
     return {
       posts: [],
       title: "",
       content: "",
-      created: new Date().toISOString().slice(0, 10),
+      created: new Date(),
       day: "",
       search: "",
+      pickerOptions: {
+          disabledDate(time) {
+            return time.getTime() > Date.now();
+          },
+          shortcuts: [{
+            text: 'Today',
+            onClick(picker) {
+              picker.$emit('pick', new Date());
+            }
+          }, {
+            text: 'Yesterday',
+            onClick(picker) {
+              const date = new Date();
+              date.setTime(date.getTime() - 3600 * 1000 * 24);
+              picker.$emit('pick', date);
+            }
+          }, {
+            text: 'Day Before',
+            onClick(picker) {
+              const date = new Date();
+              date.setTime(date.getTime() - 3600 * 1000 * 24 * 2);
+              picker.$emit('pick', date);
+            }
+          }]
+        },
     };
   },
   methods: {
@@ -97,6 +141,8 @@ export default {
         this.content = "";
       }
     },
+    // This function should be in the store actions instead
+    // TODO //
     readPosts() {
       this.posts = [];
       db.collection("isAdmin")
@@ -111,40 +157,44 @@ export default {
                 content: doc.data().content,
             });
             console.log(doc.id, " => ", doc.data());
+            this.posts.sort((c, d) => d.day.seconds - c.day.seconds);
+            this.$store.commit('updatePosts', this.posts);
           });
         })
         .catch((error) => {
           console.log("Error getting documents: ", error);
         });
     },
-    updateEmployee(id, name, date) {
-      db.collection("employees")
+    updatePost(id, title, content) {
+      db.collection("isAdmin")
         .doc(id)
         .update({
-          name: name,
-          date: date,
+          title: title,
+          content: content,
         })
         .then(() => {
           console.log("Document successfully updated!");
-          this.readEmployees();
+          this.readPosts();
         })
         .catch((error) => {
           // The document probably doesn't exist.
           console.error("Error updating document: ", error);
         });
     },
-    deleteEmployee(id) {
-      db.collection("employees")
+    deletePost(id) {
+      db.collection("isAdmin")
         .doc(id)
         .delete()
         .then(() => {
           console.log("Document successfully deleted!");
-          this.readEmployees();
+          this.readPosts();
         })
         .catch((error) => {
           console.error("Error removing document: ", error);
         });
     },
+  },
+  computed:{
   },
   mounted() {
     this.posts = this.$store.state.posts;
