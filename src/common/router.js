@@ -83,10 +83,6 @@ router.beforeEach(async (to, from, next) => {
         next({ name: 'home' });
     }
 
-    else if ((!requiresAdmin) && isAdmin) {
-        next({ name: 'diary' });
-    }
-
     else {
         // In all other circumstances, send them to the route they requested
         next();

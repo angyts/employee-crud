@@ -28,7 +28,7 @@
         >Add New Post</el-button
       >
     </el-popover>
-    <el-table
+    <el-table :default-sort = "{prop: 'day.seconds', order: 'descending'}"
       :data="posts.filter(
           (data) =>!search || data.title.toLowerCase().includes(search.toLowerCase())
         )
@@ -36,7 +36,7 @@
       style="width: 100%;"
     >
       <el-table-column label="ID" prop="id" width="80"> </el-table-column>
-      <el-table-column label="Day" prop="day.seconds"> </el-table-column>
+      <el-table-column label="Day" prop="day.seconds" sortable> </el-table-column>
       <el-table-column label="Created" prop="created.seconds"> </el-table-column>
       <el-table-column label="Title" prop="title"> </el-table-column>
       <el-table-column label="Entry" prop="content"> </el-table-column>
@@ -156,8 +156,7 @@ export default {
                 title: doc.data().title,
                 content: doc.data().content,
             });
-            console.log(doc.id, " => ", doc.data());
-            this.posts.sort((c, d) => d.day.seconds - c.day.seconds);
+            // console.log(doc.id, " => ", doc.data());
             this.$store.commit('updatePosts', this.posts);
           });
         })

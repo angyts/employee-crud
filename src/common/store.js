@@ -12,6 +12,7 @@ export default new Vuex.Store({
     // Mutations - Methods used to update data in the store.
     mutations: {
         updatePosts(state, payload) {
+            payload.sort((c, d) => d.day.seconds - c.day.seconds);
             state.posts = payload;
         },
         setAdmin(state, payload) {
