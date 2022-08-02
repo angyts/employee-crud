@@ -187,5 +187,9 @@ export default {
 
 pre, #title {
   font-family: 'Courier New', Courier, monospace;
+    overflow-x: hidden;
+    white-space: pre-wrap;
+    max-width: 100%;
+    height: auto;
 }
 </style>
