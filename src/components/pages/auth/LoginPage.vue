@@ -3,12 +3,13 @@
         <h1>Login</h1>
 
         <el-input
-        placeholder="email"
+        placeholder="Username"
         v-model="email"
       ></el-input>
 
-      <el-input placeholder="Please input password" v-model="pw" show-password @keyup.enter='login'></el-input>
-      <button @click='login' @keyup.enter='login'>Login</button>
+      <el-input placeholder="Please input password" v-model="pw" show-password></el-input>
+      <p></p>
+      <el-button @click='login' @keyup.Enter='login'>Login</el-button>
 
     </div>
 </template>
@@ -51,7 +52,7 @@ export default {
                       content: doc.data().content,
                     });
 
-                    console.log(doc.id, " => ", doc.data());
+                   // console.log(doc.id, " => ", doc.data());
                     store.commit('setAdmin', true);
                     store.commit('updatePosts', this.posts);
 

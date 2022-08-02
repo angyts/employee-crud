@@ -28,29 +28,64 @@
         >Add New Post</el-button
       >
     </el-popover>
-
-    <div id="entry-area" class="container">
-      <div id="entry" class="row" v-for="post in posts" :key="post.id">
-        <div class="container">
-          <div class="row" id="title">
-            <h4>{{ post.title }} written on {{ dateFromSecs(post.day.seconds) }}</h4>
-          </div>
-          <div class="row">
-           <pre>{{ post.content }}</pre>
-           <el-button size="mini">Edit Post</el-button>
-          </div>      
-          <hr>                   
-        </div>
-      </div>
-    </div>
+    <el-table :default-sort = "{prop: 'day.seconds', order: 'descending'}"
+      :data="posts.filter(
+          (data) =>!search || data.title.toLowerCase().includes(search.toLowerCase())
+        )
+      "
+      style="width: 100%;"
+    >
+      <el-table-column label="ID" prop="id" width="80"> </el-table-column>
+      <el-table-column label="Day" prop="day.seconds" sortable> </el-table-column>
+      <el-table-column label="Created" prop="created.seconds"> </el-table-column>
+      <el-table-column label="Title" prop="title"> </el-table-column>
+      <el-table-column label="Entry" prop="content"> </el-table-column>
+      <el-table-column align="right">
+        <template slot="header" :slot-scope="scope">
+          <el-input v-model="search" size="mini" placeholder="Type to search" />
+        </template>
+        <template slot-scope="scope">
+          <el-popover
+            placement="bottom"
+            title="Edit Post"
+            width="200"
+            trigger="click"
+          >
+            <el-input
+              v-model="scope.row.title"
+            ></el-input>
+            <el-input
+              v-model="scope.row.content"
+              @blur="updatePost(scope.row.id, scope.row.title, scope.row.content)"
+            ></el-input>            
+            <el-button size="mini" slot="reference">Edit Post</el-button>
+          </el-popover>
+          <el-button
+            size="mini"
+            type="danger"
+            @click="deletePost(scope.row.id)"
+            >Delete</el-button
+          >
+        </template>
+      </el-table-column>
+    </el-table>
   </div>
 </template>
 
 <script>
 import moment from 'moment';
+
+//
+
+// TODO 
+
+// moment.unix(Number)
+// moment().format(D / MMM / YYYY);
 import firebase from "@/firebaseInit.js";
 
 const db = firebase.firestore();
+
+
 
 export default {
     moment,
@@ -157,10 +192,6 @@ export default {
           console.error("Error removing document: ", error);
         });
     },
-    dateFromSecs(sec){
-     let t = moment.unix(sec);
-      return t.format("D / MMM / YYYY");
-    },
   },
   computed:{
   },
@@ -169,23 +200,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-#entry-area {
-  background-color: rgb(47, 140, 174, 0.225);
-  padding: 5px 5px 5px 5px;
-}
-
-#entry {
-  background-color: rgba(47, 140, 174, 0.525);
-  margin-left: 30px;
-  margin-top: 10px;
-  padding: 6px 10px 20px 20px;
-  overflow: auto;
-  display: block;
-}
-
-pre, #title {
-  font-family: 'Courier New', Courier, monospace;
-}
-</style>
