@@ -3,7 +3,6 @@
     <el-popover
       placement="bottom"
       title="New Post"
-      width="800"
       trigger="click"
     >
       <el-input
@@ -24,23 +23,40 @@
         v-model="content"
         @blur="createPost(title, day, created, content)"
       ></el-input>      
-      <el-button round slot="reference" type="success"
+      <el-button round slot="reference" type="success" size="mini"
         >Add New Post</el-button
       >
     </el-popover>
 
-    <div id="entry-area" class="container">
-      <div id="entry" class="row" v-for="post in posts" :key="post.id">
-        <div class="container">
-          <div class="row" id="title">
+    <div id="entry-area">
+      <div id="entry" class="el-row" v-for="post in posts" :key="post.id">
+          <div class="el-row" id="title">
             <h4>{{ post.title }} written on {{ dateFromSecs(post.day.seconds) }}</h4>
           </div>
-          <div class="row">
-           <pre>{{ post.content }}</pre>
-           <el-button size="mini">Edit Post</el-button>
+          <div class="el-row">
+             <pre>{{ post.content }}</pre>
+            <template>
+              <el-popover
+                placement="bottom"
+                title="Edit Post"
+                trigger="click"
+              >
+                <el-input
+                  :placeholder="post.title"
+                  v-model="post.title"
+                ></el-input>
+                <el-input
+                  :placeholder="post.content"
+                  v-model="post.content"
+                  @blur="updatePost(post.id, post.title, post.content)"
+                ></el-input>                
+              <el-button round size="mini" slot="reference">Edit Post</el-button>            
+              </el-popover>
+              <el-button size="mini" round type="danger" @click="deletePost(post.id)">Delete</el-button
+              >
+            </template>
           </div>      
           <hr>                   
-        </div>
       </div>
     </div>
   </div>
@@ -180,6 +196,7 @@ export default {
   background-color: rgba(47, 140, 174, 0.525);
   margin-left: 30px;
   margin-top: 10px;
+  margin-right: 13px;
   padding: 6px 10px 20px 20px;
   overflow: auto;
   display: block;
