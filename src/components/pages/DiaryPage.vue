@@ -4,6 +4,7 @@
       placement="bottom"
       title="New Post"
       trigger="click"
+      @hide="createPost(title, day, created, content, images)"
     >
       <el-input
         placeholder="Post Title"
@@ -19,10 +20,15 @@
       <el-input
         placeholder="Entry"
         type="textarea"
-        :rows="6"
+        :rows="8"
         v-model="content"
-        @blur="createPost(title, day, created, content)"
       ></el-input>      
+        <el-input placeholder="Image URL if any" v-model="image.url" @blur="addRow"></el-input>
+        <div v-if="images.length !== 0">
+          <div v-for="(img, index) in images" :key="index">
+            <el-input v-model="img.url"></el-input>
+          </div>
+        </div>
       <el-button round slot="reference" type="success" size="mini"
         >Add New Post</el-button
       >
@@ -35,6 +41,9 @@
           </div>
           <div class="el-row">
              <pre>{{ post.content }}</pre>
+             <div v-if="post.images">
+              <el-image v-for="img in post.images" :key="img.url" :src="img.url" lazy></el-image>
+             </div>  
             <template>
               <el-popover
                 placement="bottom"
@@ -48,12 +57,14 @@
                 <el-input
                   :placeholder="post.content"
                   v-model="post.content"
+                  type="textarea"
+                  :rows="8"
                   @blur="updatePost(post.id, post.title, post.content)"
-                ></el-input>                
+                ></el-input>               
+                <p></p>       
+                <div><el-button size="mini" round type="danger" @click="deletePost(post.id)">Delete</el-button></div>        
               <el-button round size="mini" slot="reference">Edit Post</el-button>            
               </el-popover>
-              <el-button size="mini" round type="danger" @click="deletePost(post.id)">Delete</el-button
-              >
             </template>
           </div>      
           <hr>                   
@@ -65,6 +76,7 @@
 <script>
 import moment from 'moment';
 import firebase from "@/firebaseInit.js";
+import 'firebase/firestore';
 
 const db = firebase.firestore();
 
@@ -72,9 +84,12 @@ export default {
     moment,
   data() {
     return {
-      posts: [],
       title: "",
       content: "",
+      image:{
+        url:""
+      },
+      images:[],
       created: new Date(),
       day: "",
       search: "",
@@ -106,10 +121,10 @@ export default {
     };
   },
   methods: {
-    createPost(title, day, created, content) {
+    createPost(title, day, created, content, images) {
       if (title != "" && content != "" && day != "") {
         db.collection("isAdmin")
-          .add({ title: title, day: day, created: created, content: content})
+          .add({ title: title, day: day, created: created, content: content, images:images})
           .then(() => {
             console.log("Document successfully written!");
             this.readPosts();
@@ -120,30 +135,12 @@ export default {
         this.title = "";
         this.day = "";
         this.content = "";
+        this.images = [];
+        this.image.url = "";
       }
     },
-    // This function should be in the store actions instead
-    // TODO //
     readPosts() {
-      this.posts = [];
-      db.collection("isAdmin")
-        .get()
-        .then((querySnapshot) => {
-          querySnapshot.forEach((doc) => {
-            this.posts.push({
-                id: doc.id,
-                created: doc.data().created,
-                day: doc.data().day,
-                title: doc.data().title,
-                content: doc.data().content,
-            });
-            // console.log(doc.id, " => ", doc.data());
-            this.$store.commit('updatePosts', this.posts);
-          });
-        })
-        .catch((error) => {
-          console.log("Error getting documents: ", error);
-        });
+      this.$store.dispatch('getPosts');
     },
     updatePost(id, title, content) {
       db.collection("isAdmin")
@@ -177,11 +174,22 @@ export default {
      let t = moment.unix(sec);
       return t.format("D / MMM / YYYY");
     },
+    addRow(){
+      if (this.image.url !== "" && this.image.url.startsWith("http")){
+        console.log("row added");
+        let newImage = Object.assign({}, this.image);
+        this.images.push(newImage);
+        this.image.url = "";
+        }
+    },
   },
   computed:{
+    posts (){
+      return this.$store.state.posts;
+    }
   },
   mounted() {
-    this.posts = this.$store.state.posts;
+    this.readPosts();
   },
 };
 </script>

@@ -26,7 +26,6 @@ export default {
         return {
             email: '',
             pw: '',
-            posts: [],
             loggedIn: false
         };
     },
@@ -42,29 +41,17 @@ export default {
             
             db.collection("isAdmin")
             .get()
-            .then((querySnapshot) => {
-                  querySnapshot.forEach((doc) => {
-                    this.posts.push({
-                      id: doc.id,
-                      created: doc.data().created,
-                      day: doc.data().day,
-                      title: doc.data().title,
-                      content: doc.data().content,
-                    });
+            .then(() => {
+                // console.log(doc.id, " => ", doc.data());
+                store.commit('setAdmin', true);
 
-                   // console.log(doc.id, " => ", doc.data());
-                    store.commit('setAdmin', true);
-                    store.commit('updatePosts', this.posts);
-
-                    // Send the now logged in user to the diary
-                    this.$router.push({ name: 'diary' }).catch();                    
-                  });
-                })
+                // Send the now logged in user to the diary
+                this.$router.push({ name: 'diary' }).catch();                  
+              })
             .catch(() => {
               // Logged in but not admin user
               this.$router.push({ name: 'home' }).catch();
             });
-
             })
             .catch((error) => {
              var errorCode = error.code;
