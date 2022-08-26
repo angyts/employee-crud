@@ -172,7 +172,7 @@ export default {
     },
     dateFromSecs(sec){
      let t = moment.unix(sec);
-      return t.format("D / MMM / YYYY");
+      return t.format("dddd, D / MMM / YYYY");
     },
     addRow(){
       if (this.image.url !== "" && this.image.url.startsWith("http")){

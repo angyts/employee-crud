@@ -52,7 +52,8 @@ const routes = [
         component: () => import('@/components/pages/DiaryPage.vue'),
         name: 'diary',
         meta: {
-            requiresAdmin: true
+            requiresAdmin: true,
+            title: 'You Have Found the Secret Diary',
         }
     },
 ];
